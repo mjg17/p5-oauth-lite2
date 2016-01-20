@@ -8,7 +8,6 @@ use bytes ();
 use Carp ();
 use Try::Tiny qw/try catch/;
 use LWP::UserAgent;
-use MIME::Base64 qw(encode_base64);
 use HTTP::Request;
 use HTTP::Headers;
 use Params::Validate qw(HASHREF);
