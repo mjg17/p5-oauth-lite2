@@ -3,9 +3,14 @@ use strict;
 use warnings;
 use parent 'Class::ErrorHandler';
 
+use Carp ();
+use Try::Tiny qw/try catch/;
+use HTTP::Request;
+use HTTP::Headers;
 use LWP::UserAgent;
 use Params::Validate;
 use OAuth::Lite2;
+use OAuth::Lite2::Util qw(build_content);
 use OAuth::Lite2::Client::TokenResponseParser;
 
 =head1 NAME
@@ -48,6 +53,43 @@ sub _param_spec_for_new {
         refresh_token_uri  => { default => undef }, # unused?
         agent              => { default => undef },
     };
+}
+
+sub _get_token {
+    my ($self, $params, %args) = @_;
+
+    unless (exists $args{uri}) {
+        $args{uri} = $self->{access_token_uri}
+            || Carp::croak "uri not found";
+    }
+
+    # $args{format} ||= $self->{format};
+    # $params->{format} = $args{format};
+
+    unless ($args{use_basic_schema}){
+        $params->{client_id}      = $self->{id};
+        $params->{client_secret}  = $self->{secret};
+    }
+
+    my $content = build_content($params);
+    my $headers = HTTP::Headers->new;
+    $headers->header("Content-Type" => q{application/x-www-form-urlencoded});
+    $headers->header("Content-Length" => bytes::length($content));
+    $headers->authorization_basic($self->{id}, $self->{secret})
+        if($args{use_basic_schema});
+    my $req = HTTP::Request->new( POST => $args{uri}, $headers, $content );
+
+    my $res = $self->{agent}->request($req);
+    $self->{last_request}  = $req;
+    $self->{last_response} = $res;
+
+    my ($token, $errmsg);
+    try {
+        $token = $self->{response_parser}->parse($res);
+    } catch {
+        $errmsg = "$_";
+    };
+    return $token || $self->error($errmsg);
 }
 
 =head1 AUTHOR

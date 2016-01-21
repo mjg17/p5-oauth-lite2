@@ -141,24 +141,11 @@ sub get_access_token {
         # format      => { optional => 1 },
     });
 
-    unless (exists $args{uri}) {
-        $args{uri} = $self->{access_token_uri}
-            || Carp::croak "uri not found";
-    }
-
-    # $args{format} ||= $self->{format};
-
     my %params = (
         grant_type    => 'password',
         username      => $args{username},
         password      => $args{password},
-        # format      => $args{format},
     );
-
-    unless ($args{use_basic_schema}){
-        $params{client_id}      = $self->{id};
-        $params{client_secret}  = $self->{secret};
-    }
 
     $params{scope} = $args{scope}
         if $args{scope};
@@ -166,26 +153,7 @@ sub get_access_token {
     # $params{secret_type} = $args{secret_type}
     #     if $args{secret_type};
 
-    my $content = build_content(\%params);
-    my $headers = HTTP::Headers->new;
-    $headers->header("Content-Type" => q{application/x-www-form-urlencoded});
-    $headers->header("Content-Length" => bytes::length($content));
-    $headers->authorization_basic($self->{id}, $self->{secret})    
-        if($args{use_basic_schema});
-    my $req = HTTP::Request->new( POST => $args{uri}, $headers, $content );
-
-    my $res = $self->{agent}->request($req);
-    $self->{last_request}  = $req;
-    $self->{last_response} = $res;
-
-    my ($token, $errmsg);
-    try {
-        $token = $self->{response_parser}->parse($res);
-    } catch {
-        $errmsg = "$_";
-    };
-    return $token || $self->error($errmsg);
-
+    return $self->_get_token(\%params, %args);
 }
 
 =head2 refresh_access_token( %params )
