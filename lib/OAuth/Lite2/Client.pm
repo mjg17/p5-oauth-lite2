@@ -133,6 +133,21 @@ sub refresh_access_token {
     return $self->_get_token(\%params, %args);
 }
 
+=head2 last_request
+
+Returns a HTTP::Request object that is used
+when you obtain or refresh access token last time internally.
+
+=head2 last_request
+
+Returns a HTTP::Response object that is used
+when you obtain or refresh access token last time internally.
+
+=cut
+
+sub last_request  { $_[0]->{last_request}  }
+sub last_response { $_[0]->{last_response} }
+
 =head1 AUTHOR
 
 Lyo Kato, E<lt>lyo.kato@gmail.comE<gt>
