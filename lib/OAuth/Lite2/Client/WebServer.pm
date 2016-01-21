@@ -1,19 +1,17 @@
 package OAuth::Lite2::Client::WebServer;
+
 use strict;
 use warnings;
-use base 'Class::ErrorHandler';
+use parent 'OAuth::Lite2::Client';
 use bytes ();
 
 use URI;
 use Carp ();
 use Try::Tiny qw/try catch/;
-use LWP::UserAgent;
 use HTTP::Request;
 use HTTP::Headers;
 use Params::Validate qw(HASHREF);
-use OAuth::Lite2;
 use OAuth::Lite2::Util qw(build_content);
-use OAuth::Lite2::Client::TokenResponseParser;
 use OAuth::Lite2::Client::StateResponseParser;
 
 =head1 NAME
@@ -145,38 +143,20 @@ sub new {
 
     my $class = shift;
 
-    my %args = Params::Validate::validate(@_, {
-        id                => 1,
-        secret            => 1,
-        # format          => { optional => 1 },
-        authorize_uri     => { optional => 1 },
-        access_token_uri  => { optional => 1 },
-        refresh_token_uri => { optional => 1 },
-        agent             => { optional => 1 },
-    });
+    my $self = $class->SUPER::new(@_);
 
-    my $self = bless {
-        id                => undef,
-        secret            => undef,
-        authorize_uri     => undef,
-        access_token_uri  => undef,
-        refresh_token_uri => undef,
-        last_request      => undef,
-        last_response     => undef,
-        %args,
-    }, $class;
-
-    unless ($self->{agent}) {
-        $self->{agent} = LWP::UserAgent->new;
-        $self->{agent}->agent(
-            join "/", __PACKAGE__, $OAuth::Lite2::VERSION);
-    }
-
-    $self->{format} ||= 'json';
-    $self->{response_parser} = OAuth::Lite2::Client::TokenResponseParser->new;
     $self->{state_response_parser} = OAuth::Lite2::Client::StateResponseParser->new;
 
     return $self;
+}
+
+sub _param_spec_for_new {
+    my $class = shift;
+
+    return {
+        %{$class->SUPER::_param_spec_for_new},
+        authorize_uri => { default => undef },
+    };
 }
 
 =head2 uri_to_redirect( %params )
