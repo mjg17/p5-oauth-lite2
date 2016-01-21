@@ -3,15 +3,10 @@ package OAuth::Lite2::Client::WebServer;
 use strict;
 use warnings;
 use parent 'OAuth::Lite2::Client';
-use bytes ();
 
 use URI;
 use Carp ();
-use Try::Tiny qw/try catch/;
-use HTTP::Request;
-use HTTP::Headers;
 use Params::Validate qw(HASHREF);
-use OAuth::Lite2::Util qw(build_content);
 use OAuth::Lite2::Client::StateResponseParser;
 
 =head1 NAME
@@ -256,34 +251,14 @@ sub get_server_state {
         uri           => { optional => 1 },
     });
 
-    unless (exists $args{uri}) {
-        $args{uri} = $self->{access_token_uri}
-            || Carp::croak "uri not found";
-    }
-
     my %params = (
         grant_type => 'server_state',
         client_id  => $self->{id},
     );
 
-    my $content = build_content(\%params);
-    my $headers = HTTP::Headers->new;
-    $headers->header("Content-Type" => q{application/x-www-form-urlencoded});
-    $headers->header("Content-Length" => bytes::length($content));
-    my $req = HTTP::Request->new( POST => $args{uri}, $headers, $content );
+    $args{response_parser} = $self->{state_response_parser};
 
-    my $res = $self->{agent}->request($req);
-    $self->{last_request}  = $req;
-    $self->{last_response} = $res;
-
-    my ($state, $errmsg);
-    try {
-        $state = $self->{state_response_parser}->parse($res);
-    } catch {
-        $errmsg = "$_";
-    };
-    return $state || $self->error($errmsg);
-
+    return $self->_get_token(\%params, %args);
 }
 
 =head1 AUTHOR

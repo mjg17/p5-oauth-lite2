@@ -84,9 +84,12 @@ sub _get_token {
     $self->{last_request}  = $req;
     $self->{last_response} = $res;
 
+    my $response_parser = $args{response_parser};
+    $response_parser ||= $self->{response_parser};
+
     my ($token, $errmsg);
     try {
-        $token = $self->{response_parser}->parse($res);
+        $token = $response_parser->parse($res);
     } catch {
         $errmsg = "$_";
     };

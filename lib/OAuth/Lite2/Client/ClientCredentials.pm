@@ -3,14 +3,8 @@ package OAuth::Lite2::Client::ClientCredentials;
 use strict;
 use warnings;
 use parent 'OAuth::Lite2::Client';
-use bytes ();
 
-use Carp ();
-use Try::Tiny qw/try catch/;
-use HTTP::Request;
-use HTTP::Headers;
 use Params::Validate;
-use OAuth::Lite2::Util qw(build_content);
 
 =head1 NAME
 
@@ -172,11 +166,6 @@ sub get_grouping_refresh_token {
         use_basic_schema    => { optional => 1 },
     });
 
-    unless (exists $args{uri}) {
-        $args{uri} = $self->{access_token_uri}
-            || Carp::croak "uri not found";
-    }
-
     my %params = (
         grant_type          => 'grouping_refresh_token',
         refresh_token       => $args{refresh_token},
@@ -184,30 +173,7 @@ sub get_grouping_refresh_token {
     $params{scope} = $args{scope}
         if $args{scope};
 
-    unless ($args{use_basic_schema}){
-        $params{client_id}      = $self->{id};
-        $params{client_secret}  = $self->{secret};
-    }
-
-    my $content = build_content(\%params);
-    my $headers = HTTP::Headers->new;
-    $headers->header("Content-Type" => q{application/x-www-form-urlencoded});
-    $headers->header("Content-Length" => bytes::length($content));
-    $headers->authorization_basic($self->{id}, $self->{secret})    
-        if($args{use_basic_schema});
-    my $req = HTTP::Request->new( POST => $args{uri}, $headers, $content );
-
-    my $res = $self->{agent}->request($req);
-    $self->{last_request}  = $req;
-    $self->{last_response} = $res;
-
-    my ($token, $errmsg);
-    try {
-        $token = $self->{response_parser}->parse($res);
-    } catch {
-        $errmsg = "$_";
-    };
-    return $token || $self->error($errmsg);
+    return $self->_get_token(\%params, %args);
 }
 
 =head1 AUTHOR
