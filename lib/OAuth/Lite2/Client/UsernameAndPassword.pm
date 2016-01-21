@@ -2,7 +2,7 @@ package OAuth::Lite2::Client::UsernameAndPassword;
 
 use strict;
 use warnings;
-use parent 'OAuth::Lite2::Client';
+use parent 'OAuth::Lite2::Client::ProfileBase';
 
 use Params::Validate;
 

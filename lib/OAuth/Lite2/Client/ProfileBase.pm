@@ -1,4 +1,4 @@
-package OAuth::Lite2::Client;
+package OAuth::Lite2::Client::ProfileBase;
 use strict;
 use warnings;
 use parent 'Class::ErrorHandler';
@@ -16,7 +16,7 @@ use OAuth::Lite2::Client::TokenResponseParser;
 
 =head1 NAME
 
-OAuth::Lite2::Client - Common parent for OAuth::Lite2::Client::*
+OAuth::Lite2::Client::ProfileBase - Common parent for OAuth::Lite2::Client::*
 
 =cut
 
