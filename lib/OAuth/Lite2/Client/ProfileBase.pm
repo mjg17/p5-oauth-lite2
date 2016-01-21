@@ -49,7 +49,6 @@ sub _param_spec_for_new {
     return {
         id                 => 1,
         secret             => 1,
-        authorize_uri      => { default => undef },
         access_token_uri   => { default => undef },
         refresh_token_uri  => { default => undef }, # unused?
         agent              => { default => undef },
