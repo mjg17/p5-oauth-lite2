@@ -2,6 +2,7 @@ package OAuth::Lite2::Client;
 use strict;
 use warnings;
 use parent 'Class::ErrorHandler';
+use bytes ();
 
 use Carp ();
 use Try::Tiny qw/try catch/;
@@ -90,6 +91,46 @@ sub _get_token {
         $errmsg = "$_";
     };
     return $token || $self->error($errmsg);
+}
+
+=head2 refresh_access_token( %params )
+
+Refresh access token by refresh_token,
+returns L<OAuth::Lite2::Client::Token> object.
+
+=over 4
+
+=item refresh_token
+
+=back
+
+=cut
+
+sub refresh_access_token {
+    my $self = shift;
+
+    my %args = Params::Validate::validate(@_, {
+        refresh_token => 1,
+        uri           => { optional => 1 },
+        use_basic_schema    => { optional => 1 },
+        # secret_type => { optional => 1 },
+    });
+
+    # This should use refresh_token_uri, and fall through to access_token_uri
+    unless (exists $args{uri}) {
+        $args{uri} = $self->{access_token_uri}
+            || Carp::croak "uri not found";
+    }
+
+    my %params = (
+        grant_type    => 'refresh_token',
+        refresh_token => $args{refresh_token},
+    );
+
+    # $params{secret_type} = $args{secret_type}
+    #     if $args{secret_type};
+
+    return $self->_get_token(\%params, %args);
 }
 
 =head1 AUTHOR
